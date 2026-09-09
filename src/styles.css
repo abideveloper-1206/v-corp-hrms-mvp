@@ -1,0 +1,94 @@
+@import url("https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap");
+@import "tailwindcss";
+@import "@heroui/styles";
+@custom-variant dark (&:where(.dark, .dark *));
+
+@theme {
+  --font-sans: "Inter", ui-sans-serif, system-ui, sans-serif;
+}
+
+:root {
+  --accent: oklch(0.551 0.194 264.1);
+  --accent-foreground: oklch(0.99 0 0);
+  --focus: var(--accent);
+  --radius: 0.5rem;
+}
+
+.dark {
+  --accent: oklch(0.68 0.16 264.1);
+  --accent-foreground: oklch(0.15 0.02 264);
+}
+
+:root {
+  --viz-good: #0ca30c;
+  --viz-warning: #fab219;
+  --viz-serious: #ec835a;
+  --viz-critical: #d03b3b;
+  --viz-neutral: #898781;
+  --viz-violet: #4a3aa7;
+}
+
+.dark {
+  --viz-good: #0ca30c;
+  --viz-warning: #fab219;
+  --viz-serious: #ec835a;
+  --viz-critical: #d03b3b;
+  --viz-neutral: #898781;
+  --viz-violet: #9085e9;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html,
+body,
+#app {
+  height: 100%;
+}
+
+body {
+  margin: 0;
+  font-family: var(--font-sans);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+::-webkit-scrollbar-thumb {
+  background: color-mix(in oklab, var(--muted) 40%, transparent);
+  border-radius: 999px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: color-mix(in oklab, var(--muted) 60%, transparent);
+}
+
+.no-scrollbar::-webkit-scrollbar {
+  display: none;
+}
+
+.no-scrollbar {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+
+/* Opacity-only (no transform) so this never creates a CSS containing block for
+   descendant fixed-position overlays (portaled drawers/modals would otherwise
+   get clipped to this element's box instead of the viewport). */
+@keyframes fade-in-up {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+.animate-fade-in-up {
+  animation: fade-in-up 320ms cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
