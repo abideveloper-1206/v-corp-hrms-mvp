@@ -25,17 +25,17 @@ export function StatCard({
   return (
     <Card className="animate-fade-in-up">
       <Card.Content className="flex flex-row items-center gap-3 p-3.5">
-        <span className={cn('flex size-9 shrink-0 items-center justify-center rounded-full', toneClasses[tone])}>
-          <Icon className="size-[18px]" />
+        <span className={cn('flex size-10 shrink-0 items-center justify-center rounded-full', toneClasses[tone])}>
+          <Icon className="size-5" />
         </span>
         <div className="min-w-0 flex-1">
-          <p className="truncate text-xs text-muted">{label}</p>
+          <p className="truncate text-sm text-muted">{label}</p>
           <div className="mt-0.5 flex flex-wrap items-baseline gap-x-1.5">
-            <p className="whitespace-nowrap text-lg font-bold tracking-tight text-foreground">{value}</p>
+            <p className="whitespace-nowrap text-2xl font-bold tracking-tight text-foreground">{value}</p>
             {trend ? (
               <span
                 className={cn(
-                  'whitespace-nowrap text-[11px] font-semibold',
+                  'whitespace-nowrap text-xs font-semibold',
                   trend.direction === 'up' && 'text-success',
                   trend.direction === 'down' && 'text-danger',
                   trend.direction === 'flat' && 'text-muted',

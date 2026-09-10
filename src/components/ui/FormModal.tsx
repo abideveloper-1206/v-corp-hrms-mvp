@@ -36,7 +36,7 @@ export function FormModal({
                 <Drawer.Heading className="text-base font-semibold text-foreground">{title}</Drawer.Heading>
                 {description ? <p className="mt-1 text-sm text-muted">{description}</p> : null}
               </div>
-              <Drawer.CloseTrigger />
+              <Drawer.CloseTrigger /> 
             </Drawer.Header>
             <Drawer.Body className="flex-1 overflow-y-auto px-5 py-5">{children}</Drawer.Body>
             {footer ? <Drawer.Footer className="shrink-0 border-t border-separator px-5 py-4 bg-white">{footer}</Drawer.Footer> : null}

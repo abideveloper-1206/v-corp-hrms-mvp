@@ -21,10 +21,10 @@ V Corp People is a client-rendered SaaS dashboard covering:
 
 ## 2. Tech stack
 
-- **TanStack Start** + **TanStack Router** (file-based routing, SSR shell)
+- **TanStack Start** + **TanStack Router** (file-based routing, SSR shell) with the **Nitro** Vite plugin (`nitro/vite`) for a Vercel-deployable server build
 - **TanStack Query** for all data fetching/mutation state (loading, error, caching, invalidation)
 - **React 19** + **TypeScript**
-- **HeroUI v3** as the primary component/design system (Button, Card, Table-adjacent primitives, Tabs, Drawer, AlertDialog→Drawer-based confirms, Select, DatePicker, Calendar, Dropdown/Menu, Chip, Avatar, Switch, Skeleton, Alert, Toast, etc.)
+- **HeroUI v3** as the primary component/design system (Button, Card, Table, Tabs, Drawer, Select, DatePicker, Calendar, Dropdown/Menu, Chip, Avatar, Switch, Skeleton, Alert, Toast, Pagination, etc.)
 - **Tailwind CSS v4** for layout and product-specific styling, on top of HeroUI's design tokens
 - **React Hook Form** + **Zod** for form state and validation
 - **Faker.js** (`@faker-js/faker`) for realistic seed data
@@ -52,6 +52,10 @@ npm run build
 npm run preview
 ```
 
+### Deploying to Vercel
+
+The project uses TanStack Start's Nitro Vite plugin (`nitro/vite`), which produces a Nitro-format build (`.output/`) that Vercel can auto-detect and deploy as a serverless app with no extra config — just import the GitHub repo into Vercel and deploy.
+
 ## 4. Project structure
 
 ```
@@ -66,7 +70,7 @@ src/
     layout/            # AppShell, collapsible sidebar, topbar, mobile nav drawer
     ui/                # Shared building blocks: FormFields (text/select/date), FormModal
                        # (right-side drawer), ConfirmDialog, StatusBadge, PageHeader,
-                       # EmptyStateBlock/ErrorStateBlock, StatCard, SimpleTable
+                       # EmptyStateBlock/ErrorStateBlock, StatCard, PaginationBar
   context/            # AuthContext (mock session)
   hooks/              # One hook module per domain, wrapping TanStack Query
   lib/
@@ -92,7 +96,9 @@ src/
 
 ## 6. Important technical & design decisions
 
-- **HeroUI Table was intentionally not used for data tables.** During development, HeroUI v3's `Table` component (react-aria-components based grid) was found to have a genuine layout bug: column cells collapse into each other with no visible gap when the table isn't wrapped in `ResizableTableContainer`, regardless of `minWidth`/width props (which the library only honors inside that wrapper). This was reproduced consistently and is not something app-level styling can fix. All list pages (Employees, Leave, Attendance, Payroll) instead use a small shared semantic `<table>` (`components/ui/SimpleTable.tsx`), styled with the same HeroUI design tokens (colors, spacing, radii) so it's visually consistent with the rest of the app. HeroUI's own `Table` primitives are still used elsewhere (e.g. Calendar grid, which is a different, correctly-behaving component).
+- **All data tables (Employees, Leave, Payroll, Attendance, and the sub-tables on the employee profile page) use HeroUI's real `Table` component** (`Table.ScrollContainer`, `Table.Column`, `Table.Body`/`Table.Collection`, `Table.Row`, `Table.Cell`), including sortable columns (`allowsSorting` + `Table.SortableColumnHeader`) on the Employees list. Two real HeroUI/react-aria-components gotchas came up and are worth noting for anyone extending this:
+  - `overflow: auto` (which `Table.ScrollContainer` uses, for horizontal scroll on narrow screens) does not reliably clip content to a `border-radius` in Chromium — only `overflow: hidden` does. Each table's rounded/bordered surface is therefore a plain wrapping `<div className="overflow-hidden rounded-lg ...">` around `Table.ScrollContainer`, rather than putting those classes on the scroll container itself.
+  - The dynamic `Table.Body`/`Table.Collection` caches rendered rows by item identity. If a cell's content is computed via a `.get()` lookup into an outer map (e.g. resolving an employee's department name from a separately-loaded departments query) *inside* the render callback, the row can get stuck showing stale/placeholder content even after that map is fully populated, because the collection doesn't know the lookup result changed. The fix used throughout this app: resolve every derived field (department name, employee name/avatar/designation, etc.) onto each row's own object *before* it's passed to `Table.Body`/`Table.Collection`, so the row's identity itself changes when the underlying data changes.
 - **All overlays are right-side drawers**, not centered modals — Add/Edit Employee, Add/Edit Department, leave request details, reject-reason, payslip, and confirmation dialogs all share one `FormModal` component (built on HeroUI's `Drawer`) with a sticky header and sticky footer, so long forms scroll their body only.
 - **A custom `zod-resolver.ts` replaces `@hookform/resolvers/zod`.** The published resolver package ships its own bundled react-hook-form type definitions that drifted from the installed react-hook-form version, producing false "unrelated types" TypeScript errors. A ~15-line resolver implemented directly against the installed react-hook-form types avoids the mismatch entirely.
 - **Text fields inside forms that call `reset()` (edit flows) are bound via `Controller`, not `register()`.** `register()`'s ref-based imperative update didn't reliably propagate through HeroUI's `Input` wrapper layers when repopulating a form after an async `reset()` call, which meant edit forms opened with visibly blank text fields even though the correct data had loaded. Routing those fields through `Controller` (the same fully-controlled `value`/`onChange` pattern already used for `Select`/`DatePicker`) fixed this reliably and is now the standard pattern for any field in an edit-and-reset form (see `ControlledTextField`/`ControlledTextAreaField` in `FormFields.tsx`).
@@ -112,4 +118,4 @@ src/
 - Server-persisted data (Neon Postgres + Drizzle) as an optional swap-in for the localStorage layer, behind the same `lib/db.ts` function signatures.
 - A calendar view for Attendance, in addition to the current table.
 - Bulk actions (multi-select rows for status changes).
-- Revisit HeroUI's `Table` component against a newer release in case the column-collapse issue is fixed upstream, and swap `SimpleTable` back if so.
+- Sorting on the Leave/Payroll/Attendance tables (currently only the Employees list has sortable columns, matching the assignment's explicit "sort employees" requirement).

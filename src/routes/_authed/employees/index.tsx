@@ -1,7 +1,7 @@
 import { useMemo, useState } from 'react'
 import { createFileRoute, Link, useNavigate } from '@tanstack/react-router'
 import { z } from 'zod'
-import { Avatar, Button, Dropdown, Skeleton, Table } from '@heroui/react'
+import { Avatar, Button, Dropdown, Skeleton, Table, type TableSortDirection } from '@heroui/react'
 import { Eye, MoreVertical, Pencil, Plus, Search, UserCheck2, Users, UserX } from 'lucide-react'
 import { SearchBox } from '#/components/ui/SearchBox'
 import { PaginationBar } from '#/components/ui/PaginationBar'
@@ -46,6 +46,10 @@ function EmployeesPage() {
   const [departmentFilter, setDepartmentFilter] = useState<string | null>('all')
   const [statusFilter, setStatusFilter] = useState<string | null>('all')
   const [page, setPage] = useState(1)
+  const [sortDescriptor, setSortDescriptor] = useState<{ column: string; direction: TableSortDirection }>({
+    column: 'employee',
+    direction: 'ascending',
+  })
   const [formOpen, setFormOpen] = useState(false)
   const [editingEmployee, setEditingEmployee] = useState<Employee | null>(null)
   const [statusTarget, setStatusTarget] = useState<Employee | null>(null)
@@ -71,18 +75,45 @@ function EmployeesPage() {
     })
   }, [employees, search, departmentFilter, statusFilter])
 
-  const totalPages = Math.max(1, Math.ceil(filtered.length / PAGE_SIZE))
-  const currentPage = Math.min(page, totalPages)
   // Resolve the department name onto each row's own object (rather than looking it up from
   // `departmentMap` inside the Table.Body render callback) so the row's identity changes when
   // department data arrives. HeroUI/react-aria-components' dynamic Table collection caches
   // rendered rows by item identity, so a lookup keyed only on unrelated outer state (like a map
   // that resolves after the initial render) can otherwise get stuck showing stale/placeholder
   // content even after the map itself is populated.
-  const pageItems = filtered.slice((currentPage - 1) * PAGE_SIZE, currentPage * PAGE_SIZE).map((e) => ({
-    ...e,
-    departmentName: departmentMap.get(e.departmentId)?.name ?? '—',
-  }))
+  const sorted = useMemo(() => {
+    const withDeptName = filtered.map((e) => ({ ...e, departmentName: departmentMap.get(e.departmentId)?.name ?? '—' }))
+    const { column, direction } = sortDescriptor
+    const sign = direction === 'descending' ? -1 : 1
+    return withDeptName.sort((a, b) => {
+      let cmp = 0
+      switch (column) {
+        case 'employee':
+          cmp = fullName(a).localeCompare(fullName(b))
+          break
+        case 'department':
+          cmp = a.departmentName.localeCompare(b.departmentName)
+          break
+        case 'designation':
+          cmp = a.designation.localeCompare(b.designation)
+          break
+        case 'status':
+          cmp = a.employmentStatus.localeCompare(b.employmentStatus)
+          break
+        case 'location':
+          cmp = a.location.localeCompare(b.location)
+          break
+        case 'joined':
+          cmp = a.joiningDate.localeCompare(b.joiningDate)
+          break
+      }
+      return cmp * sign
+    })
+  }, [filtered, departmentMap, sortDescriptor])
+
+  const totalPages = Math.max(1, Math.ceil(sorted.length / PAGE_SIZE))
+  const currentPage = Math.min(page, totalPages)
+  const pageItems = sorted.slice((currentPage - 1) * PAGE_SIZE, currentPage * PAGE_SIZE)
 
   function updateFilters(next: Partial<{ search: string; department: string | null; status: string | null }>) {
     if (next.search !== undefined) setSearch(next.search)
@@ -165,16 +196,31 @@ function EmployeesPage() {
         <>
           <Table>
               <Table.ScrollContainer>
-                <Table.Content aria-label="Employees" className="min-w-[900px]">
+                <Table.Content
+                  aria-label="Employees"
+                  className="min-w-[900px]"
+                  sortDescriptor={sortDescriptor}
+                  onSortChange={(d) => setSortDescriptor(d as { column: string; direction: TableSortDirection })}
+                >
                 <Table.Header>
-                  <Table.Column isRowHeader id="employee">
-                    Employee
+                  <Table.Column isRowHeader id="employee" allowsSorting>
+                    {({ sortDirection }) => <Table.SortableColumnHeader sortDirection={sortDirection}>Employee</Table.SortableColumnHeader>}
                   </Table.Column>
-                  <Table.Column id="department">Department</Table.Column>
-                  <Table.Column id="designation">Designation</Table.Column>
-                  <Table.Column id="status">Status</Table.Column>
-                  <Table.Column id="location">Location</Table.Column>
-                  <Table.Column id="joined">Joined</Table.Column>
+                  <Table.Column id="department" allowsSorting>
+                    {({ sortDirection }) => <Table.SortableColumnHeader sortDirection={sortDirection}>Department</Table.SortableColumnHeader>}
+                  </Table.Column>
+                  <Table.Column id="designation" allowsSorting>
+                    {({ sortDirection }) => <Table.SortableColumnHeader sortDirection={sortDirection}>Designation</Table.SortableColumnHeader>}
+                  </Table.Column>
+                  <Table.Column id="status" allowsSorting>
+                    {({ sortDirection }) => <Table.SortableColumnHeader sortDirection={sortDirection}>Status</Table.SortableColumnHeader>}
+                  </Table.Column>
+                  <Table.Column id="location" allowsSorting>
+                    {({ sortDirection }) => <Table.SortableColumnHeader sortDirection={sortDirection}>Location</Table.SortableColumnHeader>}
+                  </Table.Column>
+                  <Table.Column id="joined" allowsSorting>
+                    {({ sortDirection }) => <Table.SortableColumnHeader sortDirection={sortDirection}>Joined</Table.SortableColumnHeader>}
+                  </Table.Column>
                   <Table.Column id="actions"> </Table.Column>
                 </Table.Header>
                 <Table.Body>
@@ -252,7 +298,7 @@ function EmployeesPage() {
               </Table.ScrollContainer>
           </Table>
 
-          <PaginationBar currentPage={currentPage} totalPages={totalPages} totalItems={filtered.length} pageSize={PAGE_SIZE} onPageChange={setPage} />
+          <PaginationBar currentPage={currentPage} totalPages={totalPages} totalItems={sorted.length} pageSize={PAGE_SIZE} onPageChange={setPage} />
         </>
       )}
 
