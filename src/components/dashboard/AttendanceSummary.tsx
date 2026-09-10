@@ -12,7 +12,7 @@ export function AttendanceSummary({ todayRecords }: { todayRecords: Array<Attend
   }))
 
   return (
-    <Card>
+    <Card className="h-full">
       <Card.Header className="px-5 pt-5">
         <Card.Title>Today&apos;s attendance</Card.Title>
         <Card.Description>Status breakdown for working employees today</Card.Description>

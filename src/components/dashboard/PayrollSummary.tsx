@@ -8,7 +8,7 @@ export function PayrollSummary({ monthRecords, month }: { monthRecords: Array<Pa
   const byStatus = ['Draft', 'Processing', 'Completed'] as const
 
   return (
-    <Card>
+    <Card className="h-full">
       <Card.Header className="px-5 pt-5">
         <Card.Title>Payroll summary</Card.Title>
         <Card.Description>{monthLabel(month)}</Card.Description>

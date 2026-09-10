@@ -73,16 +73,16 @@ function DashboardPage() {
 
       <div className="mt-6 grid grid-cols-1 gap-4 xl:grid-cols-2">
         {isLoading ? (
-          <Skeleton className="h-72 rounded-lg" />
+          <Skeleton className="h-72 rounded-3xl" />
         ) : (
-          <Link to="/departments" className="block transition hover:-translate-y-0.5 hover:shadow-md">
+          <Link to="/departments" className="block h-full rounded-3xl transition hover:-translate-y-0.5 hover:shadow-md outline-none">
             <DepartmentDistribution departments={departments ?? []} employees={employees ?? []} />
           </Link>
         )}
         {attendanceLoading ? (
-          <Skeleton className="h-72 rounded-lg" />
+          <Skeleton className="h-72 rounded-3xl" />
         ) : (
-          <Link to="/attendance" className="block transition hover:-translate-y-0.5 hover:shadow-md">
+          <Link to="/attendance" className="block h-full rounded-3xl transition hover:-translate-y-0.5 hover:shadow-md outline-none">
             <AttendanceSummary todayRecords={todayRecords} />
           </Link>
         )}
@@ -90,9 +90,9 @@ function DashboardPage() {
 
       <div className="mt-4 grid grid-cols-1 gap-4 xl:grid-cols-2">
         {payrollLoading ? (
-          <Skeleton className="h-72 rounded-lg" />
+          <Skeleton className="h-72 rounded-3xl" />
         ) : (
-          <Link to="/payroll" className="block transition hover:-translate-y-0.5 hover:shadow-md">
+          <Link to="/payroll" className="block h-full rounded-3xl transition hover:-translate-y-0.5 hover:shadow-md outline-none">
             <PayrollSummary monthRecords={monthRecords} month={CURRENT_MONTH} />
           </Link>
         )}

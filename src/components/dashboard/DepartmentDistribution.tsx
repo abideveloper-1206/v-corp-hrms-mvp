@@ -12,7 +12,7 @@ export function DepartmentDistribution({ departments, employees }: { departments
   const max = Math.max(1, ...rows.map((r) => r.count))
 
   return (
-    <Card>
+    <Card className="h-full">
       <Card.Header className="px-5 pt-5">
         <Card.Title>Department distribution</Card.Title>
         <Card.Description>Headcount across V Corp&apos;s departments</Card.Description>
