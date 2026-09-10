@@ -1,6 +1,6 @@
 import { useMemo, useState } from 'react'
 import { createFileRoute, Link, useNavigate } from '@tanstack/react-router'
-import { Avatar, Button, Skeleton, Tabs } from '@heroui/react'
+import { Avatar, Button, Card, Skeleton, Table, Tabs } from '@heroui/react'
 import { ArrowLeft, Briefcase, Building2, Calendar, Mail, MapPin, Pencil, Phone, ShieldAlert } from 'lucide-react'
 import { useEmployee, useEmployees, useSetEmployeeStatus } from '#/hooks/useEmployees'
 import { useDepartments } from '#/hooks/useDepartments'
@@ -129,73 +129,96 @@ function EmployeeProfilePage() {
       <Tabs className="mt-6" defaultSelectedKey="overview">
         <Tabs.ListContainer className="border-b border-separator">
           <Tabs.List>
-            <Tabs.Tab id="overview">Overview</Tabs.Tab>
-            <Tabs.Tab id="attendance">Attendance</Tabs.Tab>
-            <Tabs.Tab id="leave">Leave</Tabs.Tab>
-            <Tabs.Tab id="payroll">Payroll</Tabs.Tab>
+            <Tabs.Tab id="overview">
+              Overview
+              <Tabs.Indicator />
+            </Tabs.Tab>
+            <Tabs.Tab id="attendance">
+              Attendance
+              <Tabs.Indicator />
+            </Tabs.Tab>
+            <Tabs.Tab id="leave">
+              Leave
+              <Tabs.Indicator />
+            </Tabs.Tab>
+            <Tabs.Tab id="payroll">
+              Payroll
+              <Tabs.Indicator />
+            </Tabs.Tab>
           </Tabs.List>
         </Tabs.ListContainer>
 
         <Tabs.Panel id="overview" className="pt-5">
           <div className="grid grid-cols-1 gap-4 lg:grid-cols-3">
-            <div className="rounded-lg border border-separator bg-surface p-5">
-              <p className="mb-1 text-sm font-semibold text-foreground">Contact information</p>
-              <div className="divide-y divide-separator">
+            <Card className="rounded-lg border border-separator bg-surface p-5 shadow-none">
+              <Card.Header>
+                <Card.Title className="mb-1 text-sm font-semibold text-foreground">Contact information</Card.Title>
+              </Card.Header>
+              <Card.Content className="divide-y divide-separator">
                 <InfoRow icon={Mail} label="Email" value={employee.email} />
                 <InfoRow icon={Phone} label="Phone" value={employee.phone} />
                 <InfoRow icon={MapPin} label="Address" value={employee.address} />
                 <InfoRow icon={MapPin} label="Location" value={employee.location} />
-              </div>
-            </div>
-            <div className="rounded-lg border border-separator bg-surface p-5">
-              <p className="mb-1 text-sm font-semibold text-foreground">Employment</p>
-              <div className="divide-y divide-separator">
+              </Card.Content>
+            </Card>
+            <Card className="rounded-lg border border-separator bg-surface p-5 shadow-none">
+              <Card.Header>
+                <Card.Title className="mb-1 text-sm font-semibold text-foreground">Employment</Card.Title>
+              </Card.Header>
+              <Card.Content className="divide-y divide-separator">
                 <InfoRow icon={Building2} label="Department" value={department?.name ?? '—'} />
                 <InfoRow icon={Briefcase} label="Designation" value={employee.designation} />
                 <InfoRow icon={Briefcase} label="Reporting manager" value={manager ? fullName(manager) : 'No manager assigned'} />
                 <InfoRow icon={Calendar} label="Joining date" value={formatDate(employee.joiningDate)} />
-              </div>
-            </div>
-            <div className="rounded-lg border border-separator bg-surface p-5">
-              <p className="mb-1 text-sm font-semibold text-foreground">Personal & emergency</p>
-              <div className="divide-y divide-separator">
+              </Card.Content>
+            </Card>
+            <Card className="rounded-lg border border-separator bg-surface p-5 shadow-none">
+              <Card.Header>
+                <Card.Title className="mb-1 text-sm font-semibold text-foreground">Personal & emergency</Card.Title>
+              </Card.Header>
+              <Card.Content className="divide-y divide-separator">
                 <InfoRow icon={Calendar} label="Date of birth" value={formatDate(employee.dateOfBirth)} />
                 <InfoRow icon={Briefcase} label="Gender" value={employee.gender} />
                 <InfoRow icon={Phone} label="Emergency contact" value={`${employee.emergencyContactName} · ${employee.emergencyContactPhone}`} />
                 <InfoRow icon={Briefcase} label="Base salary" value={`${formatCurrency(employee.baseSalary)} / month`} />
-              </div>
-            </div>
+              </Card.Content>
+            </Card>
           </div>
         </Tabs.Panel>
 
         <Tabs.Panel id="attendance" className="pt-5">
-          <div className="overflow-hidden rounded-lg border border-separator bg-surface">
-            <table className="w-full text-sm">
-              <thead>
-                <tr className="border-b border-separator bg-default/50 text-left text-xs font-semibold uppercase tracking-wide text-muted">
-                  <th className="px-4 py-3">Date</th>
-                  <th className="px-4 py-3">Check-in</th>
-                  <th className="px-4 py-3">Check-out</th>
-                  <th className="px-4 py-3">Hours</th>
-                  <th className="px-4 py-3">Status</th>
-                </tr>
-              </thead>
-              <tbody>
-                {myAttendance.slice(0, 15).map((record) => (
-                  <tr key={record.id} className="border-b border-separator last:border-0">
-                    <td className="px-4 py-2.5 text-foreground">{formatDate(record.date)}</td>
-                    <td className="px-4 py-2.5 text-muted">{record.checkIn ?? '—'}</td>
-                    <td className="px-4 py-2.5 text-muted">{record.checkOut ?? '—'}</td>
-                    <td className="px-4 py-2.5 text-muted">{record.workingHours || '—'}</td>
-                    <td className="px-4 py-2.5">
-                      <StatusBadge status={record.status} />
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-            {myAttendance.length === 0 ? <p className="px-4 py-10 text-center text-sm text-muted">No attendance records yet.</p> : null}
-          </div>
+          {myAttendance.length === 0 ? (
+            <p className="rounded-lg border border-separator bg-surface px-4 py-10 text-center text-sm text-muted">No attendance records yet.</p>
+          ) : (
+            <Table>
+              <Table.ScrollContainer>
+                <Table.Content aria-label="Attendance">
+                  <Table.Header>
+                    <Table.Column isRowHeader id="date">Date</Table.Column>
+                    <Table.Column id="checkIn">Check-in</Table.Column>
+                    <Table.Column id="checkOut">Check-out</Table.Column>
+                    <Table.Column id="hours">Hours</Table.Column>
+                    <Table.Column id="status">Status</Table.Column>
+                  </Table.Header>
+                  <Table.Body>
+                  <Table.Collection items={myAttendance.slice(0, 15)}>
+                    {(record) => (
+                      <Table.Row id={record.id}>
+                        <Table.Cell>{formatDate(record.date)}</Table.Cell>
+                        <Table.Cell>{record.checkIn ?? '—'}</Table.Cell>
+                        <Table.Cell>{record.checkOut ?? '—'}</Table.Cell>
+                        <Table.Cell>{record.workingHours || '—'}</Table.Cell>
+                        <Table.Cell>
+                          <StatusBadge status={record.status} />
+                        </Table.Cell>
+                      </Table.Row>
+                    )}
+                  </Table.Collection>
+                  </Table.Body>
+                </Table.Content>
+              </Table.ScrollContainer>
+            </Table>
+          )}
         </Tabs.Panel>
 
         <Tabs.Panel id="leave" className="pt-5">
@@ -210,59 +233,69 @@ function EmployeeProfilePage() {
               </div>
             ))}
           </div>
-          <div className="overflow-hidden rounded-lg border border-separator bg-surface">
-            <table className="w-full text-sm">
-              <thead>
-                <tr className="border-b border-separator bg-default/50 text-left text-xs font-semibold uppercase tracking-wide text-muted">
-                  <th className="px-4 py-3">Type</th>
-                  <th className="px-4 py-3">Dates</th>
-                  <th className="px-4 py-3">Days</th>
-                  <th className="px-4 py-3">Status</th>
-                </tr>
-              </thead>
-              <tbody>
-                {myLeaveRequests.map((req) => (
-                  <tr key={req.id} className="border-b border-separator last:border-0">
-                    <td className="px-4 py-2.5 text-foreground">{req.leaveType}</td>
-                    <td className="px-4 py-2.5 text-muted">
-                      {formatDate(req.startDate)} – {formatDate(req.endDate)}
-                    </td>
-                    <td className="px-4 py-2.5 text-muted">{req.days}</td>
-                    <td className="px-4 py-2.5">
-                      <StatusBadge status={req.status} />
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-            {myLeaveRequests.length === 0 ? <p className="px-4 py-10 text-center text-sm text-muted">No leave requests yet.</p> : null}
-          </div>
+          {myLeaveRequests.length === 0 ? (
+            <p className="rounded-lg border border-separator bg-surface px-4 py-10 text-center text-sm text-muted">No leave requests yet.</p>
+          ) : (
+            <Table>
+              <Table.ScrollContainer>
+                <Table.Content aria-label="Leave requests">
+                  <Table.Header>
+                    <Table.Column isRowHeader id="type">Type</Table.Column>
+                    <Table.Column id="dates">Dates</Table.Column>
+                    <Table.Column id="days">Days</Table.Column>
+                    <Table.Column id="status">Status</Table.Column>
+                  </Table.Header>
+                  <Table.Body>
+                  <Table.Collection items={myLeaveRequests}>
+                    {(req) => (
+                      <Table.Row id={req.id}>
+                        <Table.Cell>{req.leaveType}</Table.Cell>
+                        <Table.Cell>
+                          {formatDate(req.startDate)} – {formatDate(req.endDate)}
+                        </Table.Cell>
+                        <Table.Cell>{req.days}</Table.Cell>
+                        <Table.Cell>
+                          <StatusBadge status={req.status} />
+                        </Table.Cell>
+                      </Table.Row>
+                    )}
+                  </Table.Collection>
+                  </Table.Body>
+                </Table.Content>
+              </Table.ScrollContainer>
+            </Table>
+          )}
         </Tabs.Panel>
 
         <Tabs.Panel id="payroll" className="pt-5">
-          <div className="overflow-hidden rounded-lg border border-separator bg-surface">
-            <table className="w-full text-sm">
-              <thead>
-                <tr className="border-b border-separator bg-default/50 text-left text-xs font-semibold uppercase tracking-wide text-muted">
-                  <th className="px-4 py-3">Month</th>
-                  <th className="px-4 py-3">Net pay</th>
-                  <th className="px-4 py-3">Status</th>
-                </tr>
-              </thead>
-              <tbody>
-                {myPayroll.map((record) => (
-                  <tr key={record.id} className="border-b border-separator last:border-0">
-                    <td className="px-4 py-2.5 text-foreground">{record.month}</td>
-                    <td className="px-4 py-2.5 text-muted">{formatCurrency(record.netPay)}</td>
-                    <td className="px-4 py-2.5">
-                      <StatusBadge status={record.status} />
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-            {myPayroll.length === 0 ? <p className="px-4 py-10 text-center text-sm text-muted">No payroll records yet.</p> : null}
-          </div>
+          {myPayroll.length === 0 ? (
+            <p className="rounded-lg border border-separator bg-surface px-4 py-10 text-center text-sm text-muted">No payroll records yet.</p>
+          ) : (
+            <Table>
+              <Table.ScrollContainer>
+                <Table.Content aria-label="Payroll">
+                  <Table.Header>
+                    <Table.Column isRowHeader id="month">Month</Table.Column>
+                    <Table.Column id="netPay">Net pay</Table.Column>
+                    <Table.Column id="status">Status</Table.Column>
+                  </Table.Header>
+                  <Table.Body>
+                  <Table.Collection items={myPayroll}>
+                    {(record) => (
+                      <Table.Row id={record.id}>
+                        <Table.Cell>{record.month}</Table.Cell>
+                        <Table.Cell>{formatCurrency(record.netPay)}</Table.Cell>
+                        <Table.Cell>
+                          <StatusBadge status={record.status} />
+                        </Table.Cell>
+                      </Table.Row>
+                    )}
+                  </Table.Collection>
+                  </Table.Body>
+                </Table.Content>
+              </Table.ScrollContainer>
+            </Table>
+          )}
         </Tabs.Panel>
       </Tabs>
 

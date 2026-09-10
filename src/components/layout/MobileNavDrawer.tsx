@@ -6,7 +6,7 @@ export function MobileNavDrawer({ isOpen, onOpenChange }: { isOpen: boolean; onO
     <Drawer isOpen={isOpen} onOpenChange={onOpenChange}>
       <Drawer.Backdrop>
         <Drawer.Content placement="left" className="w-72">
-          <Drawer.Dialog className="h-full">
+          <Drawer.Dialog className="h-full w-full bg-transparent p-0 shadow-none">
             <SidebarNav onNavigate={() => onOpenChange(false)} />
           </Drawer.Dialog>
         </Drawer.Content>

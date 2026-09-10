@@ -61,7 +61,16 @@ function LeavePage() {
 
   const totalPages = Math.max(1, Math.ceil(filtered.length / PAGE_SIZE))
   const currentPage = Math.min(page, totalPages)
-  const pageItems = filtered.slice((currentPage - 1) * PAGE_SIZE, currentPage * PAGE_SIZE)
+  // Resolve the employee's name/designation/avatar onto each row's own object (rather than
+  // looking them up from `employeeMap` inside the Table.Body render callback) so the row's
+  // identity changes when employee data arrives. HeroUI/react-aria-components' dynamic Table
+  // collection caches rendered rows by item identity, so a lookup keyed only on unrelated outer
+  // state (like a map that resolves after the initial render) can otherwise get stuck showing
+  // stale/placeholder content even after the map itself is populated.
+  const pageItems = filtered.slice((currentPage - 1) * PAGE_SIZE, currentPage * PAGE_SIZE).map((r) => {
+    const emp = employeeMap.get(r.employeeId)
+    return { ...r, employeeName: emp ? fullName(emp) : 'Unknown', employeeDesignation: emp?.designation, employeeAvatarUrl: emp?.avatarUrl }
+  })
 
   function resetFiltersAndPage(next: Partial<{ search: string; type: string | null; status: string | null }>) {
     if (next.search !== undefined) setSearch(next.search)
@@ -97,10 +106,12 @@ function LeavePage() {
   const balanceRows = useMemo(() => {
     if (!balances) return []
     const term = search.trim().toLowerCase()
-    return balances.filter((b) => {
-      const emp = employeeMap.get(b.employeeId)
-      return !term || (emp && fullName(emp).toLowerCase().includes(term))
-    })
+    return balances
+      .map((b) => {
+        const emp = employeeMap.get(b.employeeId)
+        return { ...b, employeeName: emp ? fullName(emp) : 'Unknown', matchesSearch: !term || (emp ? fullName(emp).toLowerCase().includes(term) : false) }
+      })
+      .filter((b) => b.matchesSearch)
   }, [balances, employeeMap, search])
 
   return (
@@ -110,8 +121,14 @@ function LeavePage() {
       <Tabs defaultSelectedKey="requests">
         <Tabs.ListContainer className="border-b border-separator">
           <Tabs.List>
-            <Tabs.Tab id="requests">Requests</Tabs.Tab>
-            <Tabs.Tab id="balances">Balances</Tabs.Tab>
+            <Tabs.Tab id="requests">
+              Requests
+              <Tabs.Indicator />
+            </Tabs.Tab>
+            <Tabs.Tab id="balances">
+              Balances
+              <Tabs.Indicator />
+            </Tabs.Tab>
           </Tabs.List>
         </Tabs.ListContainer>
 
@@ -150,29 +167,29 @@ function LeavePage() {
           ) : (
             <>
               <Table>
-                <Table.ResizableContainer className="rounded-lg border border-separator bg-surface">
+                <Table.ScrollContainer>
                   <Table.Content aria-label="Leave Requests" className="min-w-[900px]">
                     <Table.Header>
-                      <Table.Column isRowHeader id="employee" defaultWidth="2fr" minWidth={220}>Employee<Table.ColumnResizer /></Table.Column>
-                      <Table.Column id="type" defaultWidth="1fr" minWidth={130}>Type<Table.ColumnResizer /></Table.Column>
-                      <Table.Column id="dates" defaultWidth="1fr" minWidth={150}>Dates<Table.ColumnResizer /></Table.Column>
-                      <Table.Column id="days" defaultWidth="100px" minWidth={100}>Days<Table.ColumnResizer /></Table.Column>
-                      <Table.Column id="status" defaultWidth="120px" minWidth={120}>Status<Table.ColumnResizer /></Table.Column>
-                      <Table.Column id="actions" defaultWidth="56px" minWidth={56}> </Table.Column>
+                      <Table.Column isRowHeader id="employee">Employee</Table.Column>
+                      <Table.Column id="type">Type</Table.Column>
+                      <Table.Column id="dates">Dates</Table.Column>
+                      <Table.Column id="days">Days</Table.Column>
+                      <Table.Column id="status">Status</Table.Column>
+                      <Table.Column id="actions"> </Table.Column>
                     </Table.Header>
-                    <Table.Body items={pageItems}>
+                    <Table.Body>
+                    <Table.Collection items={pageItems}>
                       {(request) => {
-                        const emp = employeeMap.get(request.employeeId)
                         return (
                           <Table.Row id={request.id}>
                             <Table.Cell>
                           <button type="button" onClick={() => setDetailRequest(request)} className="flex items-center gap-3 text-left hover:opacity-80">
                             <Avatar size="sm">
-                              <Avatar.Image src={emp?.avatarUrl} alt="" />
+                              <Avatar.Image src={request.employeeAvatarUrl} alt="" />
                             </Avatar>
                             <span className="min-w-0">
-                              <span className="block truncate text-sm font-medium text-foreground">{emp ? fullName(emp) : 'Unknown'}</span>
-                              <span className="block truncate text-xs text-muted">{emp?.designation}</span>
+                              <span className="block truncate text-sm font-medium text-foreground">{request.employeeName}</span>
+                              <span className="block truncate text-xs text-muted">{request.employeeDesignation}</span>
                             </span>
                           </button>
                         </Table.Cell>
@@ -225,9 +242,10 @@ function LeavePage() {
                           </Table.Row>
                         )
                       }}
+                    </Table.Collection>
                     </Table.Body>
                   </Table.Content>
-                </Table.ResizableContainer>
+                </Table.ScrollContainer>
               </Table>
 
               <PaginationBar currentPage={currentPage} totalPages={totalPages} totalItems={filtered.length} pageSize={PAGE_SIZE} onPageChange={setPage} />
@@ -244,24 +262,24 @@ function LeavePage() {
             </div>
           ) : (
             <Table>
-              <Table.ResizableContainer className="rounded-lg border border-separator bg-surface">
+              <Table.ScrollContainer>
                 <Table.Content aria-label="Leave Balances" className="min-w-[900px]">
                   <Table.Header>
-                    <Table.Column isRowHeader id="employee" defaultWidth="2fr" minWidth={220}>Employee<Table.ColumnResizer /></Table.Column>
-                    <Table.Column id="leaveType" defaultWidth="1fr" minWidth={130}>Leave type<Table.ColumnResizer /></Table.Column>
-                    <Table.Column id="allocated" defaultWidth="1fr" minWidth={100}>Allocated<Table.ColumnResizer /></Table.Column>
-                    <Table.Column id="used" defaultWidth="1fr" minWidth={100}>Used<Table.ColumnResizer /></Table.Column>
-                    <Table.Column id="pending" defaultWidth="1fr" minWidth={100}>Pending<Table.ColumnResizer /></Table.Column>
-                    <Table.Column id="remaining" defaultWidth="1fr" minWidth={100}>Remaining<Table.ColumnResizer /></Table.Column>
+                    <Table.Column isRowHeader id="employee">Employee</Table.Column>
+                    <Table.Column id="leaveType">Leave type</Table.Column>
+                    <Table.Column id="allocated">Allocated</Table.Column>
+                    <Table.Column id="used">Used</Table.Column>
+                    <Table.Column id="pending">Pending</Table.Column>
+                    <Table.Column id="remaining">Remaining</Table.Column>
                   </Table.Header>
-                  <Table.Body items={balanceRows.slice(0, 100)}>
+                  <Table.Body>
+                  <Table.Collection items={balanceRows.slice(0, 100)}>
                     {(balance) => {
-                      const emp = employeeMap.get(balance.employeeId)
                       const remaining = balance.allocated - balance.used - balance.pending
                       return (
                         <Table.Row id={`${balance.employeeId}-${balance.leaveType}`}>
                         <Table.Cell>
-                          <span className="text-sm text-foreground">{emp ? fullName(emp) : 'Unknown'}</span>
+                          <span className="text-sm text-foreground">{balance.employeeName}</span>
                         </Table.Cell>
                         <Table.Cell>
                           <span className="text-sm text-muted">{balance.leaveType}</span>
@@ -281,9 +299,10 @@ function LeavePage() {
                       </Table.Row>
                       )
                     }}
+                  </Table.Collection>
                   </Table.Body>
                 </Table.Content>
-              </Table.ResizableContainer>
+              </Table.ScrollContainer>
             </Table>
           )}
         </Tabs.Panel>

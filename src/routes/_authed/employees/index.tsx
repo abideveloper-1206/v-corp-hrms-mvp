@@ -10,7 +10,6 @@ import { useDepartments } from '#/hooks/useDepartments'
 import { PageHeader } from '#/components/ui/PageHeader'
 import { StatusBadge } from '#/components/ui/StatusBadge'
 import { EmptyStateBlock, ErrorStateBlock } from '#/components/ui/EmptyStateBlock'
-import { TableShell, Th, Td, Tr } from '#/components/ui/SimpleTable'
 import { SelectField, type SelectOption } from '#/components/ui/FormFields'
 import { EmployeeFormModal } from '#/components/employees/EmployeeFormModal'
 import { ConfirmDialog } from '#/components/ui/ConfirmDialog'
@@ -74,7 +73,16 @@ function EmployeesPage() {
 
   const totalPages = Math.max(1, Math.ceil(filtered.length / PAGE_SIZE))
   const currentPage = Math.min(page, totalPages)
-  const pageItems = filtered.slice((currentPage - 1) * PAGE_SIZE, currentPage * PAGE_SIZE)
+  // Resolve the department name onto each row's own object (rather than looking it up from
+  // `departmentMap` inside the Table.Body render callback) so the row's identity changes when
+  // department data arrives. HeroUI/react-aria-components' dynamic Table collection caches
+  // rendered rows by item identity, so a lookup keyed only on unrelated outer state (like a map
+  // that resolves after the initial render) can otherwise get stuck showing stale/placeholder
+  // content even after the map itself is populated.
+  const pageItems = filtered.slice((currentPage - 1) * PAGE_SIZE, currentPage * PAGE_SIZE).map((e) => ({
+    ...e,
+    departmentName: departmentMap.get(e.departmentId)?.name ?? '—',
+  }))
 
   function updateFilters(next: Partial<{ search: string; department: string | null; status: string | null }>) {
     if (next.search !== undefined) setSearch(next.search)
@@ -156,38 +164,21 @@ function EmployeesPage() {
       ) : (
         <>
           <Table>
-            <Table.ResizableContainer className="rounded-lg border border-separator bg-surface">
-              <Table.Content aria-label="Employees" className="min-w-[900px]">
+              <Table.ScrollContainer>
+                <Table.Content aria-label="Employees" className="min-w-[900px]">
                 <Table.Header>
-                  <Table.Column isRowHeader id="employee" defaultWidth="2fr" minWidth={220}>
+                  <Table.Column isRowHeader id="employee">
                     Employee
-                    <Table.ColumnResizer />
                   </Table.Column>
-                  <Table.Column id="department" defaultWidth="1fr" minWidth={130}>
-                    Department
-                    <Table.ColumnResizer />
-                  </Table.Column>
-                  <Table.Column id="designation" defaultWidth="1fr" minWidth={150}>
-                    Designation
-                    <Table.ColumnResizer />
-                  </Table.Column>
-                  <Table.Column id="status" defaultWidth="120px" minWidth={100}>
-                    Status
-                    <Table.ColumnResizer />
-                  </Table.Column>
-                  <Table.Column id="location" defaultWidth="1fr" minWidth={130}>
-                    Location
-                    <Table.ColumnResizer />
-                  </Table.Column>
-                  <Table.Column id="joined" defaultWidth="120px" minWidth={110}>
-                    Joined
-                    <Table.ColumnResizer />
-                  </Table.Column>
-                  <Table.Column id="actions" defaultWidth="56px" minWidth={56}>
-                    {' '}
-                  </Table.Column>
+                  <Table.Column id="department">Department</Table.Column>
+                  <Table.Column id="designation">Designation</Table.Column>
+                  <Table.Column id="status">Status</Table.Column>
+                  <Table.Column id="location">Location</Table.Column>
+                  <Table.Column id="joined">Joined</Table.Column>
+                  <Table.Column id="actions"> </Table.Column>
                 </Table.Header>
-                <Table.Body items={pageItems}>
+                <Table.Body>
+                  <Table.Collection items={pageItems}>
                   {(employee) => (
                     <Table.Row id={employee.id}>
                       <Table.Cell>
@@ -202,7 +193,7 @@ function EmployeesPage() {
                         </Link>
                       </Table.Cell>
                       <Table.Cell>
-                        <span className="text-sm text-foreground">{departmentMap.get(employee.departmentId)?.name ?? '—'}</span>
+                        <span className="text-sm text-foreground">{employee.departmentName}</span>
                       </Table.Cell>
                       <Table.Cell>
                         <span className="text-sm text-foreground">{employee.designation}</span>
@@ -255,9 +246,10 @@ function EmployeesPage() {
                       </Table.Cell>
                     </Table.Row>
                   )}
+                  </Table.Collection>
                 </Table.Body>
               </Table.Content>
-            </Table.ResizableContainer>
+              </Table.ScrollContainer>
           </Table>
 
           <PaginationBar currentPage={currentPage} totalPages={totalPages} totalItems={filtered.length} pageSize={PAGE_SIZE} onPageChange={setPage} />

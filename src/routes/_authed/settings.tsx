@@ -66,6 +66,7 @@ function SettingsPage() {
             {TABS.map((t) => (
               <Tabs.Tab key={t.id} id={t.id}>
                 {t.label}
+                <Tabs.Indicator />
               </Tabs.Tab>
             ))}
           </Tabs.List>

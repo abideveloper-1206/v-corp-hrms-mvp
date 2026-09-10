@@ -1,6 +1,6 @@
 import { useMemo, useState } from 'react'
 import { createFileRoute } from '@tanstack/react-router'
-import { Avatar, Button, Dropdown, Skeleton } from '@heroui/react'
+import { Avatar, Button, Dropdown, Skeleton, Table } from '@heroui/react'
 import { ArrowRightCircle, FileText, MoreVertical, Wallet } from 'lucide-react'
 import { usePayroll, useUpdatePayrollStatus } from '#/hooks/usePayroll'
 import { useEmployees } from '#/hooks/useEmployees'
@@ -11,7 +11,6 @@ import { StatCard } from '#/components/ui/StatCard'
 import { EmptyStateBlock, ErrorStateBlock } from '#/components/ui/EmptyStateBlock'
 import { ConfirmDialog } from '#/components/ui/ConfirmDialog'
 import { SelectField, type SelectOption } from '#/components/ui/FormFields'
-import { TableShell, Th, Td, Tr } from '#/components/ui/SimpleTable'
 import { SearchBox } from '#/components/ui/SearchBox'
 import { PaginationBar } from '#/components/ui/PaginationBar'
 import { PayslipModal } from '#/components/payroll/PayslipModal'
@@ -65,7 +64,16 @@ function PayrollPage() {
 
   const totalPages = Math.max(1, Math.ceil(filtered.length / PAGE_SIZE))
   const currentPage = Math.min(page, totalPages)
-  const pageItems = filtered.slice((currentPage - 1) * PAGE_SIZE, currentPage * PAGE_SIZE)
+  // Resolve the employee's name/designation/avatar onto each row's own object (rather than
+  // looking them up from `employeeMap` inside the Table.Body render callback) so the row's
+  // identity changes when employee data arrives. HeroUI/react-aria-components' dynamic Table
+  // collection caches rendered rows by item identity, so a lookup keyed only on unrelated outer
+  // state (like a map that resolves after the initial render) can otherwise get stuck showing
+  // stale/placeholder content even after the map itself is populated.
+  const pageItems = filtered.slice((currentPage - 1) * PAGE_SIZE, currentPage * PAGE_SIZE).map((r) => {
+    const emp = employeeMap.get(r.employeeId)
+    return { ...r, employeeName: emp ? fullName(emp) : 'Unknown', employeeDesignation: emp?.designation, employeeAvatarUrl: emp?.avatarUrl }
+  })
 
   const totalNet = monthRecords.reduce((sum, r) => sum + r.netPay, 0)
   const completedCount = monthRecords.filter((r) => r.status === 'Completed').length
@@ -153,83 +161,78 @@ function PayrollPage() {
         />
       ) : (
         <>
-          <TableShell>
-            <thead>
-              <tr>
-                <Th>Employee</Th>
-                <Th>Basic</Th>
-                <Th>Allowances</Th>
-                <Th>Deductions</Th>
-                <Th>Tax</Th>
-                <Th>Net pay</Th>
-                <Th>Status</Th>
-                <Th className="w-12"> </Th>
-              </tr>
-            </thead>
-            <tbody>
-              {pageItems.map((record) => {
-                const emp = employeeMap.get(record.employeeId)
-                const next = NEXT_STATUS[record.status]
-                return (
-                  <Tr key={record.id}>
-                    <Td>
-                      <button type="button" onClick={() => setPayslipRecord(record)} className="flex items-center gap-3 text-left hover:opacity-80">
-                        <Avatar size="sm">
-                          <Avatar.Image src={emp?.avatarUrl} alt="" />
-                        </Avatar>
-                        <span className="min-w-0">
-                          <span className="block truncate text-sm font-medium text-foreground">{emp ? fullName(emp) : 'Unknown'}</span>
-                          <span className="block truncate text-xs text-muted">{emp?.designation}</span>
-                        </span>
-                      </button>
-                    </Td>
-                    <Td>
-                      <span className="whitespace-nowrap text-sm text-muted">{formatCurrency(record.basic)}</span>
-                    </Td>
-                    <Td>
-                      <span className="whitespace-nowrap text-sm text-muted">{formatCurrency(record.allowances)}</span>
-                    </Td>
-                    <Td>
-                      <span className="whitespace-nowrap text-sm text-muted">{formatCurrency(record.deductions)}</span>
-                    </Td>
-                    <Td>
-                      <span className="whitespace-nowrap text-sm text-muted">{formatCurrency(record.tax)}</span>
-                    </Td>
-                    <Td>
-                      <span className="whitespace-nowrap text-sm font-semibold text-foreground">{formatCurrency(record.netPay)}</span>
-                    </Td>
-                    <Td>
-                      <StatusBadge status={record.status} />
-                    </Td>
-                    <Td>
-                      <Dropdown>
-                        <Dropdown.Trigger className="flex size-8 items-center justify-center rounded-lg text-muted outline-none hover:bg-default hover:text-foreground">
-                          <MoreVertical className="size-4" />
-                        </Dropdown.Trigger>
-                        <Dropdown.Popover placement="bottom end" className="w-48">
-                          <Dropdown.Menu
-                            onAction={(key) => {
-                              if (key === 'payslip') setPayslipRecord(record)
-                              if (key === 'advance') setStatusTarget(record)
-                            }}
-                          >
-                            <Dropdown.Item id="payslip" textValue="View payslip">
-                              <FileText className="size-4" /> View payslip
-                            </Dropdown.Item>
-                            {next ? (
-                              <Dropdown.Item id="advance" textValue={`Move to ${next}`}>
-                                <ArrowRightCircle className="size-4" /> {next === 'Processing' ? 'Move to Processing' : 'Mark Completed'}
-                              </Dropdown.Item>
-                            ) : null}
-                          </Dropdown.Menu>
-                        </Dropdown.Popover>
-                      </Dropdown>
-                    </Td>
-                  </Tr>
-                )
-              })}
-            </tbody>
-          </TableShell>
+          <Table>
+              <Table.ScrollContainer>
+              <Table.Content aria-label="Payroll" className="min-w-[900px]">
+                <Table.Header>
+                  <Table.Column isRowHeader id="employee">Employee</Table.Column>
+                  <Table.Column id="basic">Basic</Table.Column>
+                  <Table.Column id="allowances">Allowances</Table.Column>
+                  <Table.Column id="deductions">Deductions</Table.Column>
+                  <Table.Column id="tax">Tax</Table.Column>
+                  <Table.Column id="netPay">Net pay</Table.Column>
+                  <Table.Column id="status">Status</Table.Column>
+                  <Table.Column id="actions"> </Table.Column>
+                </Table.Header>
+                <Table.Body>
+                  <Table.Collection items={pageItems}>
+                  {(record) => {
+                    const next = NEXT_STATUS[record.status]
+                    return (
+                      <Table.Row id={record.id}>
+                        <Table.Cell>
+                          <button type="button" onClick={() => setPayslipRecord(record)} className="flex items-center gap-3 text-left hover:opacity-80">
+                            <Avatar size="sm">
+                              <Avatar.Image src={record.employeeAvatarUrl} alt="" />
+                            </Avatar>
+                            <span className="min-w-0">
+                              <span className="block truncate text-sm font-medium text-foreground">{record.employeeName}</span>
+                              <span className="block truncate text-xs text-muted">{record.employeeDesignation}</span>
+                            </span>
+                          </button>
+                        </Table.Cell>
+                        <Table.Cell>{formatCurrency(record.basic)}</Table.Cell>
+                        <Table.Cell>{formatCurrency(record.allowances)}</Table.Cell>
+                        <Table.Cell>{formatCurrency(record.deductions)}</Table.Cell>
+                        <Table.Cell>{formatCurrency(record.tax)}</Table.Cell>
+                        <Table.Cell>
+                          <span className="font-semibold text-foreground">{formatCurrency(record.netPay)}</span>
+                        </Table.Cell>
+                        <Table.Cell>
+                          <StatusBadge status={record.status} />
+                        </Table.Cell>
+                        <Table.Cell>
+                          <Dropdown>
+                            <Dropdown.Trigger className="flex size-8 items-center justify-center rounded-lg text-muted outline-none hover:bg-default hover:text-foreground">
+                              <MoreVertical className="size-4" />
+                            </Dropdown.Trigger>
+                            <Dropdown.Popover placement="bottom end" className="w-48">
+                              <Dropdown.Menu
+                                onAction={(key) => {
+                                  if (key === 'payslip') setPayslipRecord(record)
+                                  if (key === 'advance') setStatusTarget(record)
+                                }}
+                              >
+                                <Dropdown.Item id="payslip" textValue="View payslip">
+                                  <FileText className="size-4" /> View payslip
+                                </Dropdown.Item>
+                                {next ? (
+                                  <Dropdown.Item id="advance" textValue={`Move to ${next}`}>
+                                    <ArrowRightCircle className="size-4" /> {next === 'Processing' ? 'Move to Processing' : 'Mark Completed'}
+                                  </Dropdown.Item>
+                                ) : null}
+                              </Dropdown.Menu>
+                            </Dropdown.Popover>
+                          </Dropdown>
+                        </Table.Cell>
+                      </Table.Row>
+                    )
+                  }}
+                  </Table.Collection>
+                </Table.Body>
+              </Table.Content>
+              </Table.ScrollContainer>
+          </Table>
 
           <PaginationBar currentPage={currentPage} totalPages={totalPages} totalItems={filtered.length} pageSize={PAGE_SIZE} onPageChange={setPage} />
         </>

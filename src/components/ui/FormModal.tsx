@@ -30,8 +30,8 @@ export function FormModal({
     <Drawer isOpen={isOpen} onOpenChange={onOpenChange}>
       <Drawer.Backdrop>
         <Drawer.Content placement="right">
-          <Drawer.Dialog className={cn('flex h-full flex-col p-0', SIZE_CLASSES[size], 'max-w-full')}>
-            <Drawer.Header className="flex shrink-0 items-start justify-between gap-3 border-b border-separator px-5 py-4">
+          <Drawer.Dialog className={cn('flex bg-default h-full flex-col p-0', SIZE_CLASSES[size], 'max-w-full')}>
+            <Drawer.Header className="flex bg-white shrink-0 items-start justify-between gap-3 border-b border-separator px-5 py-4">
               <div className="min-w-0">
                 <Drawer.Heading className="text-base font-semibold text-foreground">{title}</Drawer.Heading>
                 {description ? <p className="mt-1 text-sm text-muted">{description}</p> : null}
@@ -39,7 +39,7 @@ export function FormModal({
               <Drawer.CloseTrigger />
             </Drawer.Header>
             <Drawer.Body className="flex-1 overflow-y-auto px-5 py-5">{children}</Drawer.Body>
-            {footer ? <Drawer.Footer className="shrink-0 border-t border-separator px-5 py-4">{footer}</Drawer.Footer> : null}
+            {footer ? <Drawer.Footer className="shrink-0 border-t border-separator px-5 py-4 bg-white">{footer}</Drawer.Footer> : null}
           </Drawer.Dialog>
         </Drawer.Content>
       </Drawer.Backdrop>

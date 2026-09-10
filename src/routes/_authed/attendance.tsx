@@ -56,7 +56,21 @@ function AttendancePage() {
 
   const totalPages = Math.max(1, Math.ceil(filtered.length / PAGE_SIZE))
   const currentPage = Math.min(page, totalPages)
-  const pageItems = filtered.slice((currentPage - 1) * PAGE_SIZE, currentPage * PAGE_SIZE)
+  // Resolve the employee's name/avatar/department onto each row's own object (rather than
+  // looking them up from `employeeMap`/`departmentMap` inside the Table.Body render callback)
+  // so the row's identity changes when that data arrives. HeroUI/react-aria-components' dynamic
+  // Table collection caches rendered rows by item identity, so a lookup keyed only on unrelated
+  // outer state (like a map that resolves after the initial render) can otherwise get stuck
+  // showing stale/placeholder content even after the map itself is populated.
+  const pageItems = filtered.slice((currentPage - 1) * PAGE_SIZE, currentPage * PAGE_SIZE).map((r) => {
+    const emp = employeeMap.get(r.employeeId)
+    return {
+      ...r,
+      employeeName: emp ? fullName(emp) : 'Unknown',
+      employeeAvatarUrl: emp?.avatarUrl,
+      employeeDepartmentName: emp ? (departmentMap.get(emp.departmentId)?.name ?? '—') : '—',
+    }
+  })
 
   function updateFilters(next: Partial<{ date: string; search: string; department: string | null; status: string | null }>) {
     if (next.date !== undefined) setDate(next.date)
@@ -118,32 +132,32 @@ function AttendancePage() {
       ) : (
         <>
           <Table>
-            <Table.ResizableContainer className="rounded-lg border border-separator bg-surface">
+            <Table.ScrollContainer>
               <Table.Content aria-label="Attendance" className="min-w-[900px]">
                 <Table.Header>
-                  <Table.Column isRowHeader id="employee" defaultWidth="2fr" minWidth={220}>Employee<Table.ColumnResizer /></Table.Column>
-                  <Table.Column id="department" defaultWidth="1fr" minWidth={130}>Department<Table.ColumnResizer /></Table.Column>
-                  <Table.Column id="date" defaultWidth="120px" minWidth={110}>Date<Table.ColumnResizer /></Table.Column>
-                  <Table.Column id="checkIn" defaultWidth="100px" minWidth={90}>Check-in<Table.ColumnResizer /></Table.Column>
-                  <Table.Column id="checkOut" defaultWidth="100px" minWidth={90}>Check-out<Table.ColumnResizer /></Table.Column>
-                  <Table.Column id="hours" defaultWidth="80px" minWidth={70}>Hours<Table.ColumnResizer /></Table.Column>
-                  <Table.Column id="status" defaultWidth="120px" minWidth={100}>Status<Table.ColumnResizer /></Table.Column>
+                  <Table.Column isRowHeader id="employee">Employee</Table.Column>
+                  <Table.Column id="department">Department</Table.Column>
+                  <Table.Column id="date">Date</Table.Column>
+                  <Table.Column id="checkIn">Check-in</Table.Column>
+                  <Table.Column id="checkOut">Check-out</Table.Column>
+                  <Table.Column id="hours">Hours</Table.Column>
+                  <Table.Column id="status">Status</Table.Column>
                 </Table.Header>
-                <Table.Body items={pageItems}>
+                <Table.Body>
+                  <Table.Collection items={pageItems}>
                   {(record) => {
-                    const emp = employeeMap.get(record.employeeId)
                     return (
                       <Table.Row id={record.id}>
                         <Table.Cell>
                       <div className="flex items-center gap-3">
                         <Avatar size="sm">
-                          <Avatar.Image src={emp?.avatarUrl} alt="" />
+                          <Avatar.Image src={record.employeeAvatarUrl} alt="" />
                         </Avatar>
-                        <span className="text-sm font-medium text-foreground">{emp ? fullName(emp) : 'Unknown'}</span>
+                        <span className="text-sm font-medium text-foreground">{record.employeeName}</span>
                       </div>
                     </Table.Cell>
                         <Table.Cell>
-                      <span className="text-sm text-muted">{emp ? departmentMap.get(emp.departmentId)?.name ?? '—' : '—'}</span>
+                      <span className="text-sm text-muted">{record.employeeDepartmentName}</span>
                     </Table.Cell>
                         <Table.Cell>
                       <span className="whitespace-nowrap text-sm text-muted">{formatDate(record.date)}</span>
@@ -163,9 +177,10 @@ function AttendancePage() {
                       </Table.Row>
                     )
                   }}
+                  </Table.Collection>
                 </Table.Body>
               </Table.Content>
-            </Table.ResizableContainer>
+              </Table.ScrollContainer>
           </Table>
 
           <PaginationBar currentPage={currentPage} totalPages={totalPages} totalItems={filtered.length} pageSize={PAGE_SIZE} onPageChange={setPage} />

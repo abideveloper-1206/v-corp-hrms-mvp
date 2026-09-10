@@ -1,7 +1,7 @@
-import { Calendar, DateField, DatePicker, Description, FieldError, Input, Label, Select, TextArea, TextField, ListBox } from '@heroui/react'
-import { forwardRef } from 'react'
+import { Calendar, DateField, DatePicker, Description, FieldError, Input, InputGroup, Label, Select, TextArea, TextField, ListBox } from '@heroui/react'
+import { forwardRef, useState } from 'react'
 import type { ReactNode } from 'react'
-import { ChevronDown } from 'lucide-react'
+import { ChevronDown, Eye, EyeOff } from 'lucide-react'
 import { CalendarDate, parseDate } from '@internationalized/date'
 import { Controller, type Control, type FieldValues, type Path } from 'react-hook-form'
 import { cn } from '#/lib/utils'
@@ -17,10 +17,29 @@ interface BaseFieldProps {
 
 export const TextInputField = forwardRef<HTMLInputElement, BaseFieldProps & React.ComponentProps<'input'> & { type?: string }>(
   function TextInputField({ label, description, errorMessage, isRequired, className, type = 'text', ...rest }, ref) {
+    const [showPassword, setShowPassword] = useState(false)
+    const isPassword = type === 'password'
+
     return (
       <TextField isRequired={isRequired} isInvalid={Boolean(errorMessage)} className={cn('flex flex-col gap-1.5', className)}>
         <Label className="text-sm font-medium text-foreground">{label}</Label>
-        <Input ref={ref} type={type} fullWidth {...rest} />
+        {isPassword ? (
+          <InputGroup fullWidth>
+            <InputGroup.Input ref={ref} type={showPassword ? 'text' : 'password'} {...rest} />
+            <InputGroup.Suffix>
+              <button
+                type="button"
+                onClick={() => setShowPassword((v) => !v)}
+                className="flex items-center justify-center text-muted hover:text-foreground"
+                aria-label={showPassword ? 'Hide password' : 'Show password'}
+              >
+                {showPassword ? <EyeOff className="size-4" /> : <Eye className="size-4" />}
+              </button>
+            </InputGroup.Suffix>
+          </InputGroup>
+        ) : (
+          <Input ref={ref} type={type} fullWidth {...rest} />
+        )}
         {description && !errorMessage ? <Description className="text-xs text-muted">{description}</Description> : null}
         {errorMessage ? <FieldError className="text-xs text-danger">{errorMessage}</FieldError> : <FieldError />}
       </TextField>
