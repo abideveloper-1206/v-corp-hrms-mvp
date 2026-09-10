@@ -6,7 +6,7 @@ import { Toaster } from '#/components/ui/Toaster'
 
 import appCss from '../styles.css?url'
 
-const THEME_INIT_SCRIPT = `(function(){try{var stored=window.localStorage.getItem('vcorp-hrms:settings-appearance');var mode='auto';if(stored){try{mode=JSON.parse(stored).theme||'auto'}catch(e){}}var prefersDark=window.matchMedia('(prefers-color-scheme: dark)').matches;var resolved=mode==='auto'?(prefersDark?'dark':'light'):mode;var root=document.documentElement;root.classList.remove('light','dark');root.classList.add(resolved);root.style.colorScheme=resolved;}catch(e){}})();`
+const THEME_INIT_SCRIPT = `(function(){try{var stored=window.localStorage.getItem('vcorp-hrms:settings-appearance');var mode='light';if(stored){try{mode=JSON.parse(stored).theme||'light'}catch(e){}}var prefersDark=window.matchMedia('(prefers-color-scheme: dark)').matches;var resolved=mode==='auto'?(prefersDark?'dark':'light'):mode;var root=document.documentElement;root.classList.remove('light','dark');root.classList.add(resolved);root.style.colorScheme=resolved;}catch(e){}})();`
 
 export const Route = createRootRoute({
   head: () => ({

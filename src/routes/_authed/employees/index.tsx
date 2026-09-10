@@ -19,6 +19,7 @@ import type { Employee } from '#/types'
 
 const searchSchema = z.object({
   q: z.string().optional(),
+  status: z.enum(['all', 'active', 'inactive', 'on-leave']).optional(),
 })
 
 export const Route = createFileRoute('/_authed/employees/')({
@@ -36,7 +37,7 @@ const STATUS_FILTERS: Array<SelectOption> = [
 ]
 
 function EmployeesPage() {
-  const { q } = Route.useSearch()
+  const { q, status } = Route.useSearch()
   const navigate = useNavigate({ from: Route.fullPath })
   const { data: employees, isLoading, isError, refetch } = useEmployees()
   const { data: departments } = useDepartments()
@@ -44,7 +45,7 @@ function EmployeesPage() {
 
   const [search, setSearch] = useState(q ?? '')
   const [departmentFilter, setDepartmentFilter] = useState<string | null>('all')
-  const [statusFilter, setStatusFilter] = useState<string | null>('all')
+  const [statusFilter, setStatusFilter] = useState<string | null>(status ?? 'all')
   const [page, setPage] = useState(1)
   const [sortDescriptor, setSortDescriptor] = useState<{ column: string; direction: TableSortDirection }>({
     column: 'employee',

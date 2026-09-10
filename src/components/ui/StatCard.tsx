@@ -8,12 +8,14 @@ export function StatCard({
   icon: Icon,
   trend,
   tone = 'accent',
+  className,
 }: {
   label: string
   value: string
   icon: LucideIcon
   trend?: { direction: 'up' | 'down' | 'flat'; label: string }
   tone?: 'accent' | 'success' | 'warning' | 'danger'
+  className?: string
 }) {
   const toneClasses: Record<string, string> = {
     accent: 'bg-accent-soft text-accent-soft-foreground',
@@ -23,7 +25,7 @@ export function StatCard({
   }
 
   return (
-    <Card className="animate-fade-in-up">
+    <Card className={cn('animate-fade-in-up', className)}>
       <Card.Content className="flex flex-row items-center gap-3 p-3.5">
         <span className={cn('flex size-10 shrink-0 items-center justify-center rounded-full', toneClasses[tone])}>
           <Icon className="size-5" />

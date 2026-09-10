@@ -347,7 +347,7 @@ export function defaultNotificationSettings(): NotificationSettings {
 }
 
 export function defaultAppearanceSettings(): AppearanceSettings {
-  return { theme: 'auto', density: 'comfortable' }
+  return { theme: 'light', density: 'comfortable' }
 }
 
 // A pre-seeded demo HR admin account so the login screen has known credentials.

@@ -1,4 +1,4 @@
-import { createFileRoute } from '@tanstack/react-router'
+import { createFileRoute, Link } from '@tanstack/react-router'
 import { Skeleton } from '@heroui/react'
 import { Building2, CalendarClock, UserCheck, UserPlus, Users } from 'lucide-react'
 import { useEmployees } from '#/hooks/useEmployees'
@@ -55,10 +55,18 @@ function DashboardPage() {
           Array.from({ length: 4 }).map((_, i) => <Skeleton key={i} className="h-[66px] rounded-lg" />)
         ) : (
           <>
-            <StatCard label="Total employees" value={String(totalEmployees)} icon={Users} tone="accent" />
-            <StatCard label="Active employees" value={String(activeEmployees)} icon={UserCheck} tone="success" />
-            <StatCard label="New joiners (30d)" value={String(newJoiners)} icon={UserPlus} tone="warning" />
-            <StatCard label="On leave today" value={String(onLeaveEmployees)} icon={CalendarClock} tone="danger" />
+            <Link to="/employees" className=" rounded-3xl block transition hover:-translate-y-0.5 hover:shadow-md">
+              <StatCard label="Total employees" value={String(totalEmployees)} icon={Users} tone="accent" className="cursor-pointer" />
+            </Link>
+            <Link to="/employees" search={{ status: 'active' }} className="block  rounded-3xl transition hover:-translate-y-0.5 hover:shadow-md">
+              <StatCard label="Active employees" value={String(activeEmployees)} icon={UserCheck} tone="success" className="cursor-pointer" />
+            </Link>
+            <Link to="/employees" className=" rounded-3xl block transition hover:-translate-y-0.5 hover:shadow-md">
+              <StatCard label="New joiners (30d)" value={String(newJoiners)} icon={UserPlus} tone="warning" className="cursor-pointer" />
+            </Link>
+            <Link to="/employees" search={{ status: 'on-leave' }} className="rounded-3xl block transition hover:-translate-y-0.5 hover:shadow-md">
+              <StatCard label="On leave today" value={String(onLeaveEmployees)} icon={CalendarClock} tone="danger" className="cursor-pointer" />
+            </Link>
           </>
         )}
       </div>
