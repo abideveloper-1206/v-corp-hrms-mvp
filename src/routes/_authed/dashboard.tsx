@@ -72,12 +72,30 @@ function DashboardPage() {
       </div>
 
       <div className="mt-6 grid grid-cols-1 gap-4 xl:grid-cols-2">
-        {isLoading ? <Skeleton className="h-72 rounded-lg" /> : <DepartmentDistribution departments={departments ?? []} employees={employees ?? []} />}
-        {attendanceLoading ? <Skeleton className="h-72 rounded-lg" /> : <AttendanceSummary todayRecords={todayRecords} />}
+        {isLoading ? (
+          <Skeleton className="h-72 rounded-lg" />
+        ) : (
+          <Link to="/departments" className="block transition hover:-translate-y-0.5 hover:shadow-md">
+            <DepartmentDistribution departments={departments ?? []} employees={employees ?? []} />
+          </Link>
+        )}
+        {attendanceLoading ? (
+          <Skeleton className="h-72 rounded-lg" />
+        ) : (
+          <Link to="/attendance" className="block transition hover:-translate-y-0.5 hover:shadow-md">
+            <AttendanceSummary todayRecords={todayRecords} />
+          </Link>
+        )}
       </div>
 
       <div className="mt-4 grid grid-cols-1 gap-4 xl:grid-cols-2">
-        {payrollLoading ? <Skeleton className="h-72 rounded-lg" /> : <PayrollSummary monthRecords={monthRecords} month={CURRENT_MONTH} />}
+        {payrollLoading ? (
+          <Skeleton className="h-72 rounded-lg" />
+        ) : (
+          <Link to="/payroll" className="block transition hover:-translate-y-0.5 hover:shadow-md">
+            <PayrollSummary monthRecords={monthRecords} month={CURRENT_MONTH} />
+          </Link>
+        )}
         <RecentActivity activity={activity} isLoading={activityLoading} />
       </div>
 
